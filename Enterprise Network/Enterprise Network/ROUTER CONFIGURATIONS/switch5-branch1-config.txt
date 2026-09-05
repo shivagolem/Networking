@@ -1,0 +1,62 @@
+========================================
+SW5 BRANCH 1 CONFIGURATION
+========================================
+
+hostname SW5-Branch1
+
+!
+enable secret 5 $1$mERr$9CTjUJlEqNGurQiFU.zeCi1
+!
+
+no ip domain-lookup
+
+!
+spanning-tree mode pvst
+spanning-tree extend system-id
+!
+
+interface FastEthernet0/1
+ switchport access vlan 10
+ switchport mode access
+!
+
+interface FastEthernet0/2
+ switchport access vlan 10
+ switchport mode access
+ spanning-tree portfast
+!
+
+interface FastEthernet0/3
+ switchport access vlan 10
+ switchport mode access
+ spanning-tree portfast
+!
+
+interface FastEthernet0/4
+ switchport access vlan 10
+ switchport mode access
+ spanning-tree portfast
+!
+
+interface FastEthernet0/5
+ switchport access vlan 10
+ switchport mode access
+ spanning-tree portfast
+!
+
+========================================
+VLAN CONFIGURATION
+========================================
+
+VLAN 10
+ Name: BRANCH1-USERS
+
+========================================
+TRUNK CONFIGURATION
+========================================
+
+No trunk interfaces configured on SW5.
+
+========================================
+END OF SW5 CONFIGURATION
+========================================

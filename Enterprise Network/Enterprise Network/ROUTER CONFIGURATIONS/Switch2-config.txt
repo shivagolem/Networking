@@ -1,0 +1,85 @@
+========================================
+PROJECT 1 - SWITCH CONFIGURATIONS
+========================================
+
+
+========================================
+SW2 - HR
+========================================
+
+Hostname: SW2-HR
+
+
+========================================
+VLAN CONFIGURATION
+========================================
+
+VLAN 10
+Name: SALES
+
+VLAN 20
+Name: HR
+
+VLAN 30
+Name: IT
+
+VLAN 40
+Name: FINANCE
+
+
+========================================
+TRUNK CONFIGURATION
+========================================
+
+interface FastEthernet0/1
+ switchport trunk allowed vlan 10,20,30,40
+ switchport mode trunk
+!
+interface FastEthernet0/2
+ switchport trunk allowed vlan 10,20,30,40
+ switchport mode trunk
+!
+
+
+========================================
+ACCESS PORT CONFIGURATION
+========================================
+
+interface FastEthernet0/3
+ switchport access vlan 20
+ switchport mode access
+ spanning-tree portfast
+!
+interface FastEthernet0/4
+ switchport access vlan 20
+ switchport mode access
+ spanning-tree portfast
+!
+interface FastEthernet0/5
+ switchport access vlan 20
+ switchport mode access
+ spanning-tree portfast
+!
+
+
+========================================
+VLAN DETAILS
+========================================
+
+VLAN 10 - SALES
+
+VLAN 20 - HR
+
+VLAN 30 - IT
+
+VLAN 40 - FINANCE
+
+
+========================================
+VERIFICATION
+========================================
+
+show ip interface brief
+show vlan brief
+show interfaces trunk
+show running-config
