@@ -1,0 +1,51 @@
+hostname R3-3rd_floor
+
+ip dhcp excluded-address 192.168.1.1 192.168.1.20
+ip dhcp excluded-address 192.168.2.1 192.168.2.20
+
+ip dhcp pool IT
+ network 192.168.1.0 255.255.255.0
+ default-router 192.168.1.1
+ dns-server 8.8.8.8
+
+ip dhcp pool Admin
+ network 192.168.2.0 255.255.255.0
+ default-router 192.168.2.1
+ dns-server 8.8.8.8
+
+interface FastEthernet0/0
+ no ip address
+ duplex auto
+ speed auto
+
+interface FastEthernet0/0.10
+ encapsulation dot1Q 10
+ ip address 192.168.1.1 255.255.255.0
+
+interface FastEthernet0/0.20
+ encapsulation dot1Q 20
+ ip address 192.168.2.1 255.255.255.0
+
+interface FastEthernet0/1
+ no ip address
+ duplex auto
+ speed auto
+ shutdown
+
+interface Serial0/0/0
+ ip address 10.10.10.10 255.255.255.252
+ clock rate 64000
+
+interface Serial0/0/1
+ ip address 10.10.10.5 255.255.255.252
+
+router ospf 1
+ router-id 1.1.1.1
+ log-adjacency-changes
+ network 192.168.1.0 0.0.0.255 area 0
+ network 192.168.2.0 0.0.0.255 area 0
+ network 10.10.10.0 0.0.0.3 area 0
+ network 10.10.10.4 0.0.0.3 area 0
+ network 10.10.10.8 0.0.0.3 area 0
+
+ip classless
