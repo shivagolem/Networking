@@ -1,0 +1,387 @@
+CAMPUS NETWORK - CONFIGURATION NOTES
+=====================================
+
+This file contains the main configuration commands and IP details used in my Packet Tracer project.
+Configure each block on the correct device. Do not paste all blocks into one device.
+
+1. VLAN AND GATEWAY DETAILS
+---------------------------
+VLAN 10 - MANAGEMENT - 10.10.10.0/24 - Gateway 10.10.10.1
+VLAN 20 - FACULTY    - 10.10.20.0/24 - Gateway 10.10.20.1
+VLAN 30 - STUDENTS   - 10.10.30.0/24 - Gateway 10.10.30.1
+VLAN 40 - GUESTS     - 10.10.40.0/24 - Gateway 10.10.40.1
+VLAN 50 - SERVERS    - 10.10.50.0/24 - Gateway 10.10.50.1
+VLAN 60 - CCTV-IOT   - 10.10.60.0/24 - Gateway 10.10.60.1
+VLAN 70 - VOICE      - 10.10.70.0/24 - Gateway 10.10.70.1
+
+2. CORE-SW1
+-----------
+enable
+configure terminal
+hostname CORE-SW1
+ip routing
+
+vlan 10
+ name MANAGEMENT
+vlan 20
+ name FACULTY
+vlan 30
+ name STUDENTS
+vlan 40
+ name GUESTS
+vlan 50
+ name SERVERS
+vlan 60
+ name CCTV-IOT
+vlan 70
+ name VOICE
+
+spanning-tree mode rapid-pvst
+spanning-tree vlan 10,20,30,40,50,60,70 root primary
+
+interface fastethernet0/1
+ no switchport
+ ip address 10.0.1.2 255.255.255.0
+ no shutdown
+exit
+ip route 0.0.0.0 0.0.0.0 10.0.1.1
+
+interface range fastethernet0/2 - 6
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20,30,40,50,60,70
+ no shutdown
+exit
+
+interface range fastethernet0/7 - 8
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20,30,40,50,60,70
+ channel-group 1 mode active
+ no shutdown
+exit
+interface port-channel 1
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20,30,40,50,60,70
+ no shutdown
+exit
+
+interface fastethernet0/9
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 50
+ no shutdown
+exit
+
+CORE-SW1 SVI / HSRP / DHCP RELAY
+interface vlan 10
+ ip address 10.10.10.2 255.255.255.0
+ standby 10 ip 10.10.10.1
+ standby 10 priority 110
+ standby 10 preempt
+ ip helper-address 10.10.50.10
+ no shutdown
+exit
+interface vlan 20
+ ip address 10.10.20.2 255.255.255.0
+ standby 20 ip 10.10.20.1
+ standby 20 priority 110
+ standby 20 preempt
+ ip helper-address 10.10.50.10
+ no shutdown
+exit
+interface vlan 30
+ ip address 10.10.30.2 255.255.255.0
+ standby 30 ip 10.10.30.1
+ standby 30 priority 110
+ standby 30 preempt
+ ip helper-address 10.10.50.10
+ no shutdown
+exit
+interface vlan 40
+ ip address 10.10.40.2 255.255.255.0
+ standby 40 ip 10.10.40.1
+ standby 40 priority 110
+ standby 40 preempt
+ ip helper-address 10.10.50.10
+ no shutdown
+exit
+interface vlan 50
+ ip address 10.10.50.2 255.255.255.0
+ standby 50 ip 10.10.50.1
+ standby 50 priority 110
+ standby 50 preempt
+ no shutdown
+exit
+interface vlan 60
+ ip address 10.10.60.2 255.255.255.0
+ standby 60 ip 10.10.60.1
+ standby 60 priority 110
+ standby 60 preempt
+ ip helper-address 10.10.50.10
+ no shutdown
+exit
+interface vlan 70
+ ip address 10.10.70.2 255.255.255.0
+ standby 70 ip 10.10.70.1
+ standby 70 priority 110
+ standby 70 preempt
+ ip helper-address 10.10.50.10
+ no shutdown
+exit
+end
+copy running-config startup-config
+
+
+3. CORE-SW2
+-----------
+Configure the same VLANs as CORE-SW1.
+Use this base configuration and the SVI values below.
+
+enable
+configure terminal
+hostname CORE-SW2
+ip routing
+spanning-tree mode rapid-pvst
+spanning-tree vlan 10,20,30,40,50,60,70 root secondary
+
+interface fastethernet0/1
+ no switchport
+ ip address 10.0.2.2 255.255.255.0
+ no shutdown
+exit
+ip route 0.0.0.0 0.0.0.0 10.0.2.1
+
+Trunk ports Fa0/2-Fa0/6: allow VLANs 10,20,30,40,50,60,70.
+EtherChannel Fa0/7-Fa0/8: channel-group 1 mode active.
+Port-channel 1: trunk, allow VLANs 10,20,30,40,50,60,70.
+Fa0/9: trunk, allow VLAN 50 only.
+
+CORE-SW2 SVI addresses and HSRP:
+VLAN 10: IP 10.10.10.3, HSRP virtual IP 10.10.10.1, priority 100
+VLAN 20: IP 10.10.20.3, HSRP virtual IP 10.10.20.1, priority 100
+VLAN 30: IP 10.10.30.3, HSRP virtual IP 10.10.30.1, priority 100
+VLAN 40: IP 10.10.40.3, HSRP virtual IP 10.10.40.1, priority 100
+VLAN 50: IP 10.10.50.3, HSRP virtual IP 10.10.50.1, priority 100
+VLAN 60: IP 10.10.60.3, HSRP virtual IP 10.10.60.1, priority 100
+VLAN 70: IP 10.10.70.3, HSRP virtual IP 10.10.70.1, priority 100
+
+On each SVI, configure:
+ standby <VLAN-ID> ip <virtual-gateway>
+ standby <VLAN-ID> priority 100
+ standby <VLAN-ID> preempt
+For VLANs 10,20,30,40,60,70 also configure:
+ ip helper-address 10.10.50.10
+Do not add DHCP helper to VLAN 50.
+
+
+4. R1
+-----
+enable
+configure terminal
+hostname R1
+
+interface fastethernet0/0
+ ip address 10.0.1.1 255.255.255.0
+ ip nat inside
+ no shutdown
+exit
+interface fastethernet0/1
+ ip address 10.0.2.1 255.255.255.0
+ ip nat inside
+ no shutdown
+exit
+interface serial0/0/0
+ ip address 10.0.3.1 255.255.255.0
+ ip nat outside
+ no shutdown
+exit
+
+ip route 10.10.0.0 255.255.0.0 10.0.1.2
+ip route 10.10.0.0 255.255.0.0 10.0.2.2 10
+ip route 0.0.0.0 0.0.0.0 10.0.3.2
+
+access-list 1 permit 10.10.0.0 0.0.255.255
+ip nat inside source list 1 interface serial0/0/0 overload
+end
+copy running-config startup-config
+
+
+5. ROUTER-ISP
+-------------
+enable
+configure terminal
+hostname ROUTER-ISP
+interface serial0/0/0
+ ip address 10.0.3.2 255.255.255.0
+ no shutdown
+exit
+interface loopback0
+ ip address 203.0.113.1 255.255.255.255
+ no shutdown
+exit
+ip route 10.10.0.0 255.255.0.0 10.0.3.1
+end
+copy running-config startup-config
+
+If the serial DCE side needs clocking, configure clock rate 64000 on the DCE interface only.
+
+
+6. ACCESS SWITCHES
+------------------
+Create VLANs 10,20,30,40,50,60,70 and enable:
+spanning-tree mode rapid-pvst
+
+ACCESS-SW1 and ACCESS-SW2:
+- Fa0/1-Fa0/2 are trunks. Allow VLANs 10,20,30,40,50,60,70.
+- Fa0/3-Fa0/4 are access VLAN 30.
+- Fa0/5 is access VLAN 20.
+- Fa0/6 is access VLAN 20 with voice VLAN 70.
+- Port security is enabled on endpoint ports; maximum 1, except phone port maximum 2; sticky MAC enabled.
+
+ACCESS-SW3:
+- Fa0/1-Fa0/2 trunks.
+- Fa0/3-Fa0/5 access VLAN 30.
+- Fa0/6 access VLAN 40.
+
+ACCESS-SW4:
+- Fa0/1 trunk.
+- Fa0/2-Fa0/4 access VLAN 30.
+- Fa0/5 access VLAN 40.
+
+ACCESS-SW5:
+- Fa0/1 trunk.
+- Fa0/2-Fa0/3 access VLAN 30.
+- Fa0/4 access VLAN 20.
+- Fa0/5 access VLAN 60.
+
+ACCESS-SW6:
+- Fa0/1-Fa0/2 trunks.
+- Fa0/3 access VLAN 60.
+- Fa0/4 access VLAN 40.
+- Fa0/5 access VLAN 60.
+
+
+7. SERVER SWITCHES
+------------------
+SERVER-ACCESS-SW:
+- Fa0/1 trunk, VLAN 50 only.
+- Fa0/2-Fa0/4 access VLAN 50.
+
+SERVER-SW:
+- Fa0/1 access VLAN 50 (Server0).
+- Fa0/2 trunk, VLAN 50 only.
+
+
+8. SERVER IP AND SERVICES
+-------------------------
+Server1: 10.10.50.10 /24, gateway 10.10.50.1, DNS 10.10.50.10
+Server1 provides DHCP and DNS.
+DHCP pools:
+MANAGEMENT - gateway 10.10.10.1, start 10.10.10.100
+FACULTY    - gateway 10.10.20.1, start 10.10.20.100
+STUDENTS   - gateway 10.10.30.1, start 10.10.30.100
+GUESTS     - gateway 10.10.40.1, start 10.10.40.100
+SERVERS    - gateway 10.10.50.1, start 10.10.50.100
+CCTV-IOT   - gateway 10.10.60.1, start 10.10.60.100
+VOICE      - gateway 10.10.70.1, start 10.10.70.100
+Subnet mask for all pools: 255.255.255.0
+DNS for all pools: 10.10.50.10
+Maximum users in each pool: 50
+
+Server2: 10.10.50.20 /24, gateway 10.10.50.1 (HTTP/HTTPS)
+Server3: 10.10.50.30 /24, gateway 10.10.50.1 (FTP)
+Optional Server0: 10.10.50.40 /24, gateway 10.10.50.1
+
+DNS records on Server1:
+www.campus.local -> 10.10.50.20
+files.campus.local -> 10.10.50.30
+
+DHCP relay is configured on both core switches for VLANs 10,20,30,40,60,70 using:
+ip helper-address 10.10.50.10
+VLAN 50 does not need a helper because the DHCP server is in VLAN 50.
+
+
+9. ACCESS CONTROL LISTS
+-----------------------
+Student ACL (apply inbound on interface VLAN 30 on both core switches):
+ip access-list extended STUDENT-RESTRICTION
+ deny ip 10.10.30.0 0.0.0.255 10.10.10.0 0.0.0.255
+ permit ip any any
+exit
+interface vlan 30
+ ip access-group STUDENT-RESTRICTION in
+
+Guest ACL (apply inbound on interface VLAN 40 on both core switches):
+ip access-list extended GUEST-RESTRICTION
+ permit udp any eq 68 any eq 67
+ permit udp 10.10.40.0 0.0.0.255 host 10.10.50.10 eq 53
+ permit tcp 10.10.40.0 0.0.0.255 host 10.10.50.10 eq 53
+ deny ip 10.10.40.0 0.0.0.255 10.10.0.0 0.0.255.255
+ permit ip any any
+exit
+interface vlan 40
+ ip access-group GUEST-RESTRICTION in
+
+
+10. SSH
+-------
+Configure on CORE-SW1, CORE-SW2, R1 and ROUTER-ISP.
+Use your own lab password.
+
+ip domain-name campus.local
+username netadmin secret <YOUR-LAB-PASSWORD>
+crypto key generate rsa
+ip ssh version 2
+line vty 0 4
+ login local
+ transport input ssh
+exit
+
+
+11. PORT SECURITY
+-----------------
+On the selected end-device access ports:
+switchport mode access
+switchport port-security
+switchport port-security maximum 1
+switchport port-security mac-address sticky
+
+For the IP phone port on ACCESS-SW1 and ACCESS-SW2, use maximum 2 because the phone and a PC can share that port.
+
+
+12. IMPORTANT VERIFICATION COMMANDS
+-----------------------------------
+show vlan brief
+show interfaces trunk
+show cdp neighbors
+show spanning-tree summary
+show spanning-tree vlan 30
+show etherchannel summary
+show standby brief
+show ip interface brief
+show ip route
+show access-lists
+show ip nat statistics
+show ip nat translations
+show port-security address
+
+Tests:
+- PC receives DHCP address from its VLAN range.
+- PC can ping its HSRP gateway.
+- DNS resolves www.campus.local to 10.10.50.20.
+- Browser opens http://www.campus.local.
+- FTP server is reachable at files.campus.local.
+- Student VLAN cannot reach Management VLAN.
+- Guest VLAN cannot reach internal networks except allowed DHCP/DNS.
+- HSRP failover changes the active gateway when tested.
+- NAT test reaches 203.0.113.1 and creates a translation.
+
+IMPORTANT NOTES
+---------------
+- The R1 link to CORE-SW1 uses CORE-SW1 Fa0/1 in this rebuild.
+- The ISP test IP is 203.0.113.1.
+- Server0 address 10.10.50.40 is optional/suggested.
+- Save each device configuration after making changes.
+- Check the detailed Configuration-Runbook.pdf for the full device-by-device steps and exact cabling map.
